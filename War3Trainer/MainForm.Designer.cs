@@ -55,6 +55,7 @@
             this.cmdGetAllObjects = new System.Windows.Forms.Button();
             this.cmdModify = new System.Windows.Forms.Button();
             this.cmdLockArmor = new System.Windows.Forms.Button();
+            this.cmdLockAttributes = new System.Windows.Forms.Button();
             this.txtIntroduction = new System.Windows.Forms.TextBox();
             this.splitMain = new System.Windows.Forms.SplitContainer();
             this.lblEmpty = new System.Windows.Forms.Label();
@@ -223,7 +224,7 @@
             // cmdLockArmor
             // 
             this.cmdLockArmor.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.cmdLockArmor.Location = new System.Drawing.Point(286, 411);
+            this.cmdLockArmor.Location = new System.Drawing.Point(205, 411);
             this.cmdLockArmor.Margin = new System.Windows.Forms.Padding(3, 9, 3, 3);
             this.cmdLockArmor.Name = "cmdLockArmor";
             this.cmdLockArmor.Size = new System.Drawing.Size(75, 23);
@@ -231,6 +232,18 @@
             this.cmdLockArmor.Text = "锁定护甲";
             this.cmdLockArmor.UseVisualStyleBackColor = true;
             this.cmdLockArmor.Click += new System.EventHandler(this.cmdLockArmor_Click);
+            // 
+            // cmdLockAttributes
+            // 
+            this.cmdLockAttributes.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.cmdLockAttributes.Location = new System.Drawing.Point(286, 411);
+            this.cmdLockAttributes.Margin = new System.Windows.Forms.Padding(3, 9, 3, 3);
+            this.cmdLockAttributes.Name = "cmdLockAttributes";
+            this.cmdLockAttributes.Size = new System.Drawing.Size(75, 23);
+            this.cmdLockAttributes.TabIndex = 7;
+            this.cmdLockAttributes.Text = "锁定属性";
+            this.cmdLockAttributes.UseVisualStyleBackColor = true;
+            this.cmdLockAttributes.Click += new System.EventHandler(this.cmdLockAttributes_Click);
             // 
             // txtIntroduction
             // 
@@ -333,6 +346,7 @@
             this.ClientSize = new System.Drawing.Size(535, 446);
             this.Controls.Add(this.splitMain);
             this.Controls.Add(this.cmdModify);
+            this.Controls.Add(this.cmdLockAttributes);
             this.Controls.Add(this.cmdLockArmor);
             this.Controls.Add(this.cmdGetAllObjects);
             this.Controls.Add(this.toolContainer);
@@ -374,6 +388,7 @@
         private System.Windows.Forms.Button cmdGetAllObjects;
         private System.Windows.Forms.Button cmdModify;
         private System.Windows.Forms.Button cmdLockArmor;
+        private System.Windows.Forms.Button cmdLockAttributes;
         private ListViewEx viewData;
         private System.Windows.Forms.ToolStripButton cmdScanGame;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;

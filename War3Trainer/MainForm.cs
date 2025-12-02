@@ -9,9 +9,15 @@ namespace War3Trainer
     {
         private GameContext _currentGameContext;
         private GameTrainer _mainTrainer;
+
+        // 护甲锁定相关
         private bool _isArmorLocked = false;
         private System.Windows.Forms.Timer _armorLockTimer;
         private HashSet<UInt32> _lockedArmorAddresses = new HashSet<UInt32>(); // 存储所有已锁定的护甲地址
+
+        // 属性锁定相关（HP / MP / 护甲 / 攻击间隔 / 攻击范围）
+        private bool _isAttributeLocked = false;
+        private Dictionary<UInt32, float> _lockedAttributeValues = new Dictionary<UInt32, float>(); // 地址 -> 锁定值
 
         public MainForm()
         {
@@ -202,7 +208,7 @@ namespace War3Trainer
             using (WindowsApi.ProcessMemory mem = new WindowsApi.ProcessMemory(_currentGameContext.ProcessId))
             {
                 const float LOCKED_ARMOR_VALUE = 2E+20f;
-                
+
                 foreach (ListViewItem currentItem in viewData.Items)
                 {
                     IAddressNode addressLine = currentItem.Tag as IAddressNode;
@@ -214,6 +220,14 @@ namespace War3Trainer
                     {
                         mem.WriteFloat((IntPtr)addressLine.Address, LOCKED_ARMOR_VALUE);
                         currentItem.SubItems[1].Text = LOCKED_ARMOR_VALUE.ToString();
+                        continue;
+                    }
+
+                    // 如果属性已锁定，恢复为锁定值
+                    if (_isAttributeLocked && _lockedAttributeValues.TryGetValue(addressLine.Address, out float lockedValue))
+                    {
+                        mem.WriteFloat((IntPtr)addressLine.Address, lockedValue);
+                        currentItem.SubItems[1].Text = lockedValue.ToString();
                         continue;
                     }
 
@@ -243,10 +257,10 @@ namespace War3Trainer
         // To apply the modifications
         private void ApplyModify()
         {
-            const float LOCKED_ARMOR_VALUE = 2E+20f;
-            
             using (WindowsApi.ProcessMemory mem = new WindowsApi.ProcessMemory(_currentGameContext.ProcessId))
             {
+                const float LOCKED_ARMOR_VALUE = 2E+20f;
+
                 foreach (ListViewItem currentItem in viewData.Items)
                 {
                     string itemValueString = currentItem.SubItems[2].Text;
@@ -266,6 +280,14 @@ namespace War3Trainer
                         // 跳过写入，直接恢复为锁定值
                         mem.WriteFloat((IntPtr)addressLine.Address, LOCKED_ARMOR_VALUE);
                         currentItem.SubItems[2].Text = ""; // 清除修改标记
+                        continue;
+                    }
+
+                    // 如果属性已锁定，阻止修改并恢复为锁定值
+                    if (_isAttributeLocked && _lockedAttributeValues.TryGetValue(addressLine.Address, out float lockedValue))
+                    {
+                        mem.WriteFloat((IntPtr)addressLine.Address, lockedValue);
+                        currentItem.SubItems[2].Text = "";
                         continue;
                     }
 
@@ -396,6 +418,104 @@ namespace War3Trainer
             }
         }
 
+        private void cmdLockAttributes_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (_currentGameContext == null)
+                {
+                    MessageBox.Show("请先查找游戏！", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // 如果已经锁定，则解锁
+                if (_isAttributeLocked)
+                {
+                    _isAttributeLocked = false;
+                    _lockedAttributeValues.Clear();
+                    cmdLockAttributes.Text = "锁定属性";
+                    cmdLockAttributes.BackColor = System.Drawing.SystemColors.Control;
+                    MessageBox.Show("属性锁定已解除！", "解锁成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                if (_mainTrainer == null)
+                {
+                    MessageBox.Show("尚未加载任何单位，请先点击“刷新”。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // 可锁定的属性及其默认值
+                Dictionary<string, float> targetValues = new Dictionary<string, float>
+                {
+                    { "MP - 最大",  2E+12f },
+                    { "MP - 目前",  2E+12f },
+                    { "HP - 最大",  2E+12f },
+                    { "HP - 目前",  2E+12f },
+                    { "盔甲 - 数量", 2E+12f },
+                    { "攻击1 - 间隔", 0.2f },
+                    { "攻击1 - 范围", 5000f },
+                };
+
+                int lockedCount = 0;
+
+                using (WindowsApi.ProcessMemory mem = new WindowsApi.ProcessMemory(_currentGameContext.ProcessId))
+                {
+                    foreach (IAddressNode addressLine in _mainTrainer.GetAddressList())
+                    {
+                        if (!targetValues.TryGetValue(addressLine.Caption, out float value))
+                            continue;
+
+                        // 只处理浮点类型的属性
+                        if (addressLine.ValueType != AddressListValueType.Float)
+                            continue;
+
+                        mem.WriteFloat((IntPtr)addressLine.Address, value);
+                        _lockedAttributeValues[addressLine.Address] = value;
+                        lockedCount++;
+                    }
+                }
+
+                if (lockedCount == 0)
+                {
+                    MessageBox.Show("当前未找到可锁定的属性，请先选择一个单位或相关功能节点。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                _isAttributeLocked = true;
+                // 如需更强保护，可启用定时器：
+                // _armorLockTimer.Start();
+                cmdLockAttributes.Text = "解锁属性";
+                cmdLockAttributes.BackColor = System.Drawing.Color.LightSkyBlue;
+
+                MessageBox.Show(
+                    $"已锁定 {lockedCount} 个属性：\n\n" +
+                    "可锁定的属性包括：\n" +
+                    "- MP - 最大\n" +
+                    "- MP - 目前\n" +
+                    "- HP - 最大\n" +
+                    "- HP - 目前\n" +
+                    "- 盔甲 - 数量\n" +
+                    "- 攻击1 - 间隔\n" +
+                    "- 攻击1 - 范围\n\n" +
+                    "锁定值：\n" +
+                    "- HP / MP / 盔甲 = 2E+12\n" +
+                    "- 攻击1 - 间隔 = 0.2\n" +
+                    "- 攻击1 - 范围 = 5000",
+                    "锁定成功",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+            catch (WindowsApi.BadProcessIdException ex)
+            {
+                ReportProcessIdFailure(ex.ProcessId);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("锁定属性时发生错误：" + ex.Message, "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         private void cmdLockArmor_Click(object sender, EventArgs e)
         {
             try
@@ -466,7 +586,7 @@ namespace War3Trainer
 
         private void ArmorLockTimer_Tick(object sender, EventArgs e)
         {
-            if (!_isArmorLocked || _currentGameContext == null)
+            if ((!_isArmorLocked && !_isAttributeLocked) || _currentGameContext == null)
             {
                 _armorLockTimer.Stop();
                 return;
@@ -474,13 +594,26 @@ namespace War3Trainer
 
             try
             {
-                const float LOCKED_ARMOR_VALUE = 2E+20f;
                 using (WindowsApi.ProcessMemory mem = new WindowsApi.ProcessMemory(_currentGameContext.ProcessId))
                 {
+                    const float LOCKED_ARMOR_VALUE = 2E+20f;
+
                     // 持续锁定所有已记录的护甲地址（用于防止游戏本身修改）
-                    foreach (UInt32 address in _lockedArmorAddresses)
+                    if (_isArmorLocked)
                     {
-                        mem.WriteFloat((IntPtr)address, LOCKED_ARMOR_VALUE);
+                        foreach (UInt32 address in _lockedArmorAddresses)
+                        {
+                            mem.WriteFloat((IntPtr)address, LOCKED_ARMOR_VALUE);
+                        }
+                    }
+
+                    // 持续锁定所有已记录的属性地址（用于防止游戏本身修改）
+                    if (_isAttributeLocked)
+                    {
+                        foreach (var kvp in _lockedAttributeValues)
+                        {
+                            mem.WriteFloat((IntPtr)kvp.Key, kvp.Value);
+                        }
                     }
                 }
             }
@@ -489,9 +622,13 @@ namespace War3Trainer
                 // 如果发生错误（如游戏关闭），停止锁定
                 _armorLockTimer.Stop();
                 _isArmorLocked = false;
+                _isAttributeLocked = false;
                 _lockedArmorAddresses.Clear();
+                _lockedAttributeValues.Clear();
                 cmdLockArmor.Text = "锁定护甲";
                 cmdLockArmor.BackColor = System.Drawing.SystemColors.Control;
+                cmdLockAttributes.Text = "锁定属性";
+                cmdLockAttributes.BackColor = System.Drawing.SystemColors.Control;
             }
         }
 

@@ -1,0 +1,136 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # 当推送版本标签时触发，例如 v1.0.0
+  workflow_dispatch:  # 允许手动触发
+    inputs:
+      version:
+        description: 'Release version (e.g., 1.0.0)'
+        required: true
+        default: '1.0.0'
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET Framework
+      uses: microsoft/setup-msbuild@v1.1
+      
+    - name: Install .NET Framework 4.8 Developer Pack
+      run: |
+        # 检查是否已安装
+        $devPackPath = "C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8"
+        if (-not (Test-Path $devPackPath)) {
+          Write-Host "Installing .NET Framework 4.8 Developer Pack..."
+          $url = "https://go.microsoft.com/fwlink/?linkid=2088517"
+          $output = "$env:TEMP\ndp48-devpack-enu.exe"
+          Invoke-WebRequest -Uri $url -OutFile $output
+          Start-Process -FilePath $output -ArgumentList "/quiet", "/norestart" -Wait
+          Write-Host "Installation completed."
+        } else {
+          Write-Host ".NET Framework 4.8 Developer Pack already installed."
+        }
+        
+    - name: Build Release
+      run: |
+        $msbuild = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
+        if (-not (Test-Path $msbuild)) {
+          $msbuild = "C:\Program Files\Microsoft Visual Studio\2022\Professional\MSBuild\Current\Bin\MSBuild.exe"
+        }
+        if (-not (Test-Path $msbuild)) {
+          $msbuild = "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe"
+        }
+        if (-not (Test-Path $msbuild)) {
+          $msbuild = "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
+        }
+        if (-not (Test-Path $msbuild)) {
+          $msbuild = "C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\MSBuild\Current\Bin\MSBuild.exe"
+        }
+        if (-not (Test-Path $msbuild)) {
+          $msbuild = "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\MSBuild.exe"
+        }
+        
+        & $msbuild War3Trainer.sln /t:Clean /p:Configuration=Release /p:Platform="Any CPU" /v:minimal
+        & $msbuild War3Trainer.sln /t:Build /p:Configuration=Release /p:Platform="Any CPU" /v:minimal
+        
+    - name: Package Release
+      run: |
+        $releaseDir = "Release"
+        if (Test-Path $releaseDir) {
+          Remove-Item $releaseDir -Recurse -Force
+        }
+        New-Item -ItemType Directory -Path $releaseDir | Out-Null
+        
+        Copy-Item "War3Trainer\bin\Release\War3Trainer.exe" -Destination $releaseDir -Force
+        Copy-Item "War3Trainer\bin\Release\War3Trainer.exe.config" -Destination $releaseDir -Force
+        
+        # 复制其他依赖文件（如果有）
+        Get-ChildItem "War3Trainer\bin\Release\*.dll" -ErrorAction SilentlyContinue | ForEach-Object {
+          Copy-Item $_.FullName -Destination $releaseDir -Force
+        }
+        
+    - name: Get Version
+      id: get_version
+      run: |
+        if (${{ github.event_name }} -eq 'workflow_dispatch') {
+          $version = "${{ github.event.inputs.version }}"
+        } else {
+          $tag = "${{ github.ref }}"
+          $version = $tag -replace 'refs/tags/v', ''
+        }
+        echo "VERSION=$version" >> $env:GITHUB_ENV
+        echo "TAG=v$version" >> $env:GITHUB_ENV
+        
+    - name: Create Release Archive
+      run: |
+        $archiveName = "War3Trainer-v$env:VERSION.zip"
+        Compress-Archive -Path "Release\*" -DestinationPath $archiveName -Force
+        echo "ARCHIVE=$archiveName" >> $env:GITHUB_ENV
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ env.TAG }}
+        name: War3Trainer ${{ env.VERSION }}
+        body: |
+          ## War3Trainer ${{ env.VERSION }}
+          
+          ### 下载
+          - [War3Trainer-v${{ env.VERSION }}.zip](https://github.com/${{ github.repository }}/releases/download/${{ env.TAG }}/War3Trainer-v${{ env.VERSION }}.zip)
+          
+          ### 主要功能
+          - 修改游戏资源（金、木、人口等）
+          - 修改单位属性（HP、MP、攻击力、护甲等）
+          - 修改英雄属性（力量、敏捷、智力、经验值等）
+          - **锁定护甲功能**：一键锁定单位护甲为 2E+20，持续保持不可改变
+          
+          ### 系统要求
+          - Windows 7 或更高版本
+          - .NET Framework 4.8 或更高版本
+          
+          ### 使用说明
+          1. 以管理员身份运行 War3Trainer.exe
+          2. 启动游戏后，点击"查找游戏"
+          3. 点击"刷新"加载单位列表
+          4. 选择要修改的单位或资源
+          5. 修改数值后点击"修改"应用
+          
+          ### 更新内容
+          - 查看 [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/master/CHANGELOG.md) 了解详细更新内容
+          
+          ---
+          
+          **注意**: 此修改器仅用于单机游戏，不适用于网络对战。
+        files: |
+          ${{ env.ARCHIVE }}
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

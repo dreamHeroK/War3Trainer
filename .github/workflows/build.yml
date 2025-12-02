@@ -1,0 +1,64 @@
+name: Build
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET Framework
+      uses: microsoft/setup-msbuild@v1.1
+      
+    - name: Install .NET Framework 4.8 Developer Pack
+      run: |
+        # 检查是否已安装
+        $devPackPath = "C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8"
+        if (-not (Test-Path $devPackPath)) {
+          Write-Host "Installing .NET Framework 4.8 Developer Pack..."
+          $url = "https://go.microsoft.com/fwlink/?linkid=2088517"
+          $output = "$env:TEMP\ndp48-devpack-enu.exe"
+          Invoke-WebRequest -Uri $url -OutFile $output
+          Start-Process -FilePath $output -ArgumentList "/quiet", "/norestart" -Wait
+          Write-Host "Installation completed."
+        } else {
+          Write-Host ".NET Framework 4.8 Developer Pack already installed."
+        }
+        
+    - name: Build Release
+      run: |
+        $msbuild = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
+        if (-not (Test-Path $msbuild)) {
+          $msbuild = "C:\Program Files\Microsoft Visual Studio\2022\Professional\MSBuild\Current\Bin\MSBuild.exe"
+        }
+        if (-not (Test-Path $msbuild)) {
+          $msbuild = "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe"
+        }
+        if (-not (Test-Path $msbuild)) {
+          $msbuild = "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
+        }
+        if (-not (Test-Path $msbuild)) {
+          $msbuild = "C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\MSBuild\Current\Bin\MSBuild.exe"
+        }
+        if (-not (Test-Path $msbuild)) {
+          $msbuild = "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\MSBuild.exe"
+        }
+        
+        & $msbuild War3Trainer.sln /t:Clean /p:Configuration=Release /p:Platform="Any CPU" /v:minimal
+        & $msbuild War3Trainer.sln /t:Build /p:Configuration=Release /p:Platform="Any CPU" /v:minimal
+        
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: War3Trainer-Release
+        path: |
+          War3Trainer/bin/Release/*.exe
+          War3Trainer/bin/Release/*.config
+

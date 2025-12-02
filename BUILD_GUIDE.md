@@ -5,7 +5,7 @@
 ## 项目信息
 
 - **项目类型**: C# Windows Forms 应用程序
-- **目标框架**: .NET Framework 4.6.1
+- **目标框架**: .NET Framework 4.8
 - **输出类型**: WinExe (Windows 可执行文件)
 
 ## 打包方法
@@ -60,6 +60,8 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
 ## 输出文件位置
 
+### 构建输出
+
 构建成功后，所有文件都在以下目录：
 ```
 War3Trainer\bin\Release\
@@ -70,11 +72,39 @@ War3Trainer\bin\Release\
 - `War3Trainer.exe.config` - 配置文件（如果有）
 - 其他依赖的 DLL 文件（如果有）
 
+### 打包输出（使用 build.ps1）
+
+如果使用 `build.ps1` 脚本构建，会自动将文件打包到：
+```
+Release\
+```
+
+打包后的文件夹包含：
+- `War3Trainer.exe` - 主程序可执行文件
+- `War3Trainer.exe.config` - 配置文件
+
+这个 `Release` 文件夹可以直接分发，用户只需要确保安装了 .NET Framework 4.8 或更高版本即可运行。
+
+## 系统要求
+
+### 开发环境
+
+- **Visual Studio 2017 或更高版本**（推荐 Visual Studio 2022）
+- **.NET Framework 4.8 开发工具包**（SDK/Targeting Pack）
+  - 如果构建时出现 "找不到 .NET Framework 的引用程序集" 错误，需要安装开发工具包
+  - 可以通过 Visual Studio Installer 安装，或从 [Microsoft 官网](https://dotnet.microsoft.com/download/dotnet-framework/net48) 下载
+
+### 运行环境
+
+- **.NET Framework 4.8 或更高版本**（通常 Windows 10/11 已预装）
+- **Windows 7 或更高版本**
+
 ## 注意事项
 
-1. **.NET Framework 要求**: 目标机器需要安装 .NET Framework 4.6.1 或更高版本才能运行
+1. **.NET Framework 要求**: 目标机器需要安装 .NET Framework 4.8 或更高版本才能运行
 2. **依赖项**: 如果项目引用了第三方库，需要确保这些 DLL 文件与 exe 在同一目录
 3. **配置文件**: `app.config` 会在构建时自动复制为 `War3Trainer.exe.config`
+4. **管理员权限**: 修改器需要管理员权限才能访问游戏进程内存
 
 ## 发布单文件（可选）
 

@@ -5,7 +5,15 @@
 ![Screenshot](https://raw.githubusercontent.com/tctianchi/War3Trainer/master/Screenshot.png)
 
 ## 修改器简介
-这款修改器可以读写游戏中的游戏资源、单位攻击力、英雄属性等，帮助你在单机游戏中获得更好的娱乐体验。但不能：
+这款修改器可以读写游戏中的游戏资源、单位攻击力、英雄属性等，帮助你在单机游戏中获得更好的娱乐体验。
+
+### 主要功能
+* 修改游戏资源（金、木、人口等）
+* 修改单位属性（HP、MP、攻击力、护甲等）
+* 修改英雄属性（力量、敏捷、智力、经验值等）
+* **锁定护甲功能**：一键锁定单位护甲为 2E+20，持续保持不可改变
+
+### 使用限制
 * 修改器不是作弊器，只能在单机上使用
 * 不适用于网络对战，更无法在战网上胡闹
 * 没有向网络发送过任何欺骗信息
@@ -27,6 +35,39 @@
 * 1.27a（1.27.0.52240）
 * 1.28（1.28.0.7205）
 * 1.28f（1.28.5.7680）
+
+## 编译和打包
+
+### 快速开始
+
+1. **安装开发环境**
+   - 安装 Visual Studio 2017 或更高版本（推荐 Visual Studio 2022）
+   - 确保安装了 .NET Framework 4.8 开发工具包
+
+2. **使用构建脚本打包（推荐）**
+   
+   在项目根目录运行：
+   ```powershell
+   .\build.ps1
+   ```
+   
+   如果遇到执行策略限制：
+   ```powershell
+   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+   .\build.ps1
+   ```
+   
+   构建完成后，exe 文件会在 `Release` 文件夹中。
+
+3. **使用 Visual Studio**
+   - 打开 `War3Trainer.sln`
+   - 选择 Release 配置
+   - 生成 → 生成解决方案（`Ctrl+Shift+B`）
+   - exe 文件位于 `War3Trainer\bin\Release\War3Trainer.exe`
+
+### 详细打包说明
+
+更多详细的打包方法和说明，请参考 [BUILD_GUIDE.md](BUILD_GUIDE.md) 文档。
 
 ## 新版本出现后的更新方法（程序员看这里）
 如果有下一个版本的魔兽3，我肯定不会马上更新修改器的，你可以用下面的方法更改修改器的代码，达到升级的目的。

@@ -11,14 +11,14 @@ namespace War3Trainer
         private GameTrainer _mainTrainer;
         private bool _isArmorLocked = false;
         private System.Windows.Forms.Timer _armorLockTimer;
-        private UInt32 _lockedArmorAddress = 0;
+        private HashSet<UInt32> _lockedArmorAddresses = new HashSet<UInt32>(); // 存储所有已锁定的护甲地址
 
         public MainForm()
         {
             InitializeComponent();
             SetRightGrid(RightFunction.Introduction);
             
-            // 初始化护甲锁定定时器
+            // 初始化护甲锁定定时器（可选，用于持续保护）
             _armorLockTimer = new System.Windows.Forms.Timer();
             _armorLockTimer.Interval = 100; // 每100毫秒检查一次
             _armorLockTimer.Tick += ArmorLockTimer_Tick;
@@ -201,11 +201,21 @@ namespace War3Trainer
             // To get memory content
             using (WindowsApi.ProcessMemory mem = new WindowsApi.ProcessMemory(_currentGameContext.ProcessId))
             {
+                const float LOCKED_ARMOR_VALUE = 2E+20f;
+                
                 foreach (ListViewItem currentItem in viewData.Items)
                 {
                     IAddressNode addressLine = currentItem.Tag as IAddressNode;
                     if (addressLine == null)
                         continue;
+
+                    // 如果护甲已锁定，恢复为锁定值
+                    if (_isArmorLocked && addressLine.Caption == "盔甲 - 数量" && _lockedArmorAddresses.Contains(addressLine.Address))
+                    {
+                        mem.WriteFloat((IntPtr)addressLine.Address, LOCKED_ARMOR_VALUE);
+                        currentItem.SubItems[1].Text = LOCKED_ARMOR_VALUE.ToString();
+                        continue;
+                    }
 
                     Object itemValue;
                     switch (addressLine.ValueType)
@@ -233,6 +243,8 @@ namespace War3Trainer
         // To apply the modifications
         private void ApplyModify()
         {
+            const float LOCKED_ARMOR_VALUE = 2E+20f;
+            
             using (WindowsApi.ProcessMemory mem = new WindowsApi.ProcessMemory(_currentGameContext.ProcessId))
             {
                 foreach (ListViewItem currentItem in viewData.Items)
@@ -247,6 +259,15 @@ namespace War3Trainer
                     IAddressNode addressLine = currentItem.Tag as IAddressNode;
                     if (addressLine == null)
                         continue;
+
+                    // 如果护甲已锁定，阻止修改并恢复为锁定值
+                    if (_isArmorLocked && addressLine.Caption == "盔甲 - 数量" && _lockedArmorAddresses.Contains(addressLine.Address))
+                    {
+                        // 跳过写入，直接恢复为锁定值
+                        mem.WriteFloat((IntPtr)addressLine.Address, LOCKED_ARMOR_VALUE);
+                        currentItem.SubItems[2].Text = ""; // 清除修改标记
+                        continue;
+                    }
 
                     switch (addressLine.ValueType)
                     {
@@ -390,7 +411,7 @@ namespace War3Trainer
                 {
                     _armorLockTimer.Stop();
                     _isArmorLocked = false;
-                    _lockedArmorAddress = 0;
+                    _lockedArmorAddresses.Clear();
                     cmdLockArmor.Text = "锁定护甲";
                     cmdLockArmor.BackColor = System.Drawing.SystemColors.Control;
                     MessageBox.Show("护甲锁定已解除！", "解锁成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -420,18 +441,18 @@ namespace War3Trainer
                     foreach (UInt32 address in armorAddresses)
                     {
                         mem.WriteFloat((IntPtr)address, LOCKED_ARMOR_VALUE);
+                        _lockedArmorAddresses.Add(address); // 添加到锁定地址集合
                     }
-                    // 使用第一个地址作为主要锁定地址
-                    _lockedArmorAddress = armorAddresses[0];
                 }
 
-                // 启动定时器持续锁定
+                // 启动锁定（可选：定时器用于持续保护，但主要保护通过 ApplyModify 和 FillAddressList 实现）
                 _isArmorLocked = true;
-                _armorLockTimer.Start();
+                // 可以选择不启动定时器，只使用写入拦截和刷新恢复的方式
+                // _armorLockTimer.Start(); // 如果需要持续保护游戏本身修改，可以启用
                 cmdLockArmor.Text = "解锁护甲";
                 cmdLockArmor.BackColor = System.Drawing.Color.LightGreen;
 
-                MessageBox.Show($"已锁定 {armorAddresses.Count} 个单位的护甲为 2E+20，将持续保持该值！", "锁定成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show($"已锁定 {armorAddresses.Count} 个单位的护甲为 2E+20！\n\n保护方式：\n- 阻止通过修改器修改\n- 刷新时自动恢复\n- 可通过定时器持续保护（可选）", "锁定成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (WindowsApi.BadProcessIdException ex)
             {
@@ -456,14 +477,10 @@ namespace War3Trainer
                 const float LOCKED_ARMOR_VALUE = 2E+20f;
                 using (WindowsApi.ProcessMemory mem = new WindowsApi.ProcessMemory(_currentGameContext.ProcessId))
                 {
-                    // 查找所有"盔甲 - 数量"的地址并持续锁定
-                    foreach (IAddressNode addressLine in _mainTrainer.GetAddressList())
+                    // 持续锁定所有已记录的护甲地址（用于防止游戏本身修改）
+                    foreach (UInt32 address in _lockedArmorAddresses)
                     {
-                        if (addressLine.Caption == "盔甲 - 数量")
-                        {
-                            // 持续将护甲值锁定为 2E+20
-                            mem.WriteFloat((IntPtr)addressLine.Address, LOCKED_ARMOR_VALUE);
-                        }
+                        mem.WriteFloat((IntPtr)address, LOCKED_ARMOR_VALUE);
                     }
                 }
             }
@@ -472,7 +489,7 @@ namespace War3Trainer
                 // 如果发生错误（如游戏关闭），停止锁定
                 _armorLockTimer.Stop();
                 _isArmorLocked = false;
-                _lockedArmorAddress = 0;
+                _lockedArmorAddresses.Clear();
                 cmdLockArmor.Text = "锁定护甲";
                 cmdLockArmor.BackColor = System.Drawing.SystemColors.Control;
             }

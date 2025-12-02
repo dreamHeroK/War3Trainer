@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -8,11 +9,19 @@ namespace War3Trainer
     {
         private GameContext _currentGameContext;
         private GameTrainer _mainTrainer;
+        private bool _isArmorLocked = false;
+        private System.Windows.Forms.Timer _armorLockTimer;
+        private UInt32 _lockedArmorAddress = 0;
 
         public MainForm()
         {
             InitializeComponent();
             SetRightGrid(RightFunction.Introduction);
+            
+            // 初始化护甲锁定定时器
+            _armorLockTimer = new System.Windows.Forms.Timer();
+            _armorLockTimer.Interval = 100; // 每100毫秒检查一次
+            _armorLockTimer.Tick += ArmorLockTimer_Tick;
         }
 
         private void FrmMain_Load(object sender, EventArgs e)
@@ -363,6 +372,109 @@ namespace War3Trainer
             catch (WindowsApi.BadProcessIdException ex)
             {
                 ReportProcessIdFailure(ex.ProcessId);
+            }
+        }
+
+        private void cmdLockArmor_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (_currentGameContext == null)
+                {
+                    MessageBox.Show("请先查找游戏！", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // 如果已经锁定，则解锁
+                if (_isArmorLocked)
+                {
+                    _armorLockTimer.Stop();
+                    _isArmorLocked = false;
+                    _lockedArmorAddress = 0;
+                    cmdLockArmor.Text = "锁定护甲";
+                    cmdLockArmor.BackColor = System.Drawing.SystemColors.Control;
+                    MessageBox.Show("护甲锁定已解除！", "解锁成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                // 查找所有"盔甲 - 数量"的地址（可能有多个单位）
+                List<UInt32> armorAddresses = new List<UInt32>();
+                foreach (IAddressNode addressLine in _mainTrainer.GetAddressList())
+                {
+                    if (addressLine.Caption == "盔甲 - 数量")
+                    {
+                        armorAddresses.Add(addressLine.Address);
+                    }
+                }
+
+                if (armorAddresses.Count == 0)
+                {
+                    MessageBox.Show("未找到护甲地址，请先选择一个单位！", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // 设置所有找到的护甲值为 2E+20 (2×10^20)
+                const float LOCKED_ARMOR_VALUE = 2E+20f;
+                using (WindowsApi.ProcessMemory mem = new WindowsApi.ProcessMemory(_currentGameContext.ProcessId))
+                {
+                    foreach (UInt32 address in armorAddresses)
+                    {
+                        mem.WriteFloat((IntPtr)address, LOCKED_ARMOR_VALUE);
+                    }
+                    // 使用第一个地址作为主要锁定地址
+                    _lockedArmorAddress = armorAddresses[0];
+                }
+
+                // 启动定时器持续锁定
+                _isArmorLocked = true;
+                _armorLockTimer.Start();
+                cmdLockArmor.Text = "解锁护甲";
+                cmdLockArmor.BackColor = System.Drawing.Color.LightGreen;
+
+                MessageBox.Show($"已锁定 {armorAddresses.Count} 个单位的护甲为 2E+20，将持续保持该值！", "锁定成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (WindowsApi.BadProcessIdException ex)
+            {
+                ReportProcessIdFailure(ex.ProcessId);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("锁定护甲时发生错误：" + ex.Message, "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void ArmorLockTimer_Tick(object sender, EventArgs e)
+        {
+            if (!_isArmorLocked || _currentGameContext == null)
+            {
+                _armorLockTimer.Stop();
+                return;
+            }
+
+            try
+            {
+                const float LOCKED_ARMOR_VALUE = 2E+20f;
+                using (WindowsApi.ProcessMemory mem = new WindowsApi.ProcessMemory(_currentGameContext.ProcessId))
+                {
+                    // 查找所有"盔甲 - 数量"的地址并持续锁定
+                    foreach (IAddressNode addressLine in _mainTrainer.GetAddressList())
+                    {
+                        if (addressLine.Caption == "盔甲 - 数量")
+                        {
+                            // 持续将护甲值锁定为 2E+20
+                            mem.WriteFloat((IntPtr)addressLine.Address, LOCKED_ARMOR_VALUE);
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // 如果发生错误（如游戏关闭），停止锁定
+                _armorLockTimer.Stop();
+                _isArmorLocked = false;
+                _lockedArmorAddress = 0;
+                cmdLockArmor.Text = "锁定护甲";
+                cmdLockArmor.BackColor = System.Drawing.SystemColors.Control;
             }
         }
 

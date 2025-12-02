@@ -483,8 +483,8 @@ namespace War3Trainer
                 }
 
                 _isAttributeLocked = true;
-                // 如需更强保护，可启用定时器：
-                // _armorLockTimer.Start();
+                // 启用定时器，持续保护锁定的属性
+                _armorLockTimer.Start();
                 cmdLockAttributes.Text = "解锁属性";
                 cmdLockAttributes.BackColor = System.Drawing.Color.LightSkyBlue;
 
@@ -565,10 +565,9 @@ namespace War3Trainer
                     }
                 }
 
-                // 启动锁定（可选：定时器用于持续保护，但主要保护通过 ApplyModify 和 FillAddressList 实现）
+                // 启动锁定，启用定时器持续保护锁定的护甲
                 _isArmorLocked = true;
-                // 可以选择不启动定时器，只使用写入拦截和刷新恢复的方式
-                // _armorLockTimer.Start(); // 如果需要持续保护游戏本身修改，可以启用
+                _armorLockTimer.Start(); // 启动定时器，防止游戏本身修改护甲值
                 cmdLockArmor.Text = "解锁护甲";
                 cmdLockArmor.BackColor = System.Drawing.Color.LightGreen;
 

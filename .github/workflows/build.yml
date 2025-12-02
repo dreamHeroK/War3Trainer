@@ -55,7 +55,7 @@ jobs:
         & $msbuild War3Trainer.sln /t:Build /p:Configuration=Release /p:Platform="Any CPU" /v:minimal
         
     - name: Upload Build Artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: War3Trainer-Release
         path: |

@@ -14,10 +14,12 @@ namespace War3Trainer
         private bool _isArmorLocked = false;
         private System.Windows.Forms.Timer _armorLockTimer;
         private HashSet<UInt32> _lockedArmorAddresses = new HashSet<UInt32>(); // 存储所有已锁定的护甲地址
+        private Dictionary<UInt32, WindowsApi.MemoryProtection> _armorOriginalProtections = new Dictionary<UInt32, WindowsApi.MemoryProtection>(); // 地址 -> 原始保护属性
 
         // 属性锁定相关（HP / MP / 护甲 / 攻击间隔 / 攻击范围）
         private bool _isAttributeLocked = false;
         private Dictionary<UInt32, float> _lockedAttributeValues = new Dictionary<UInt32, float>(); // 地址 -> 锁定值
+        private Dictionary<UInt32, WindowsApi.MemoryProtection> _attributeOriginalProtections = new Dictionary<UInt32, WindowsApi.MemoryProtection>(); // 地址 -> 原始保护属性
 
         public MainForm()
         {
@@ -218,16 +220,56 @@ namespace War3Trainer
                     // 如果护甲已锁定，恢复为锁定值
                     if (_isArmorLocked && addressLine.Caption == "盔甲 - 数量" && _lockedArmorAddresses.Contains(addressLine.Address))
                     {
-                        mem.WriteFloat((IntPtr)addressLine.Address, LOCKED_ARMOR_VALUE);
-                        currentItem.SubItems[1].Text = LOCKED_ARMOR_VALUE.ToString();
+                        // 如果已设置为只读，需要临时恢复为可写
+                        bool wasReadOnly = _armorOriginalProtections.ContainsKey(addressLine.Address);
+                        WindowsApi.MemoryProtection oldProtect = WindowsApi.MemoryProtection.PAGE_READWRITE;
+                        if (wasReadOnly)
+                        {
+                            mem.SetMemoryReadWrite((IntPtr)addressLine.Address, 4, out oldProtect);
+                        }
+                        
+                        try
+                        {
+                            mem.WriteFloat((IntPtr)addressLine.Address, LOCKED_ARMOR_VALUE);
+                            currentItem.SubItems[1].Text = LOCKED_ARMOR_VALUE.ToString();
+                        }
+                        finally
+                        {
+                            // 如果原来是只读，恢复为只读
+                            if (wasReadOnly)
+                            {
+                                WindowsApi.MemoryProtection dummy;
+                                mem.SetMemoryReadOnly((IntPtr)addressLine.Address, 4, out dummy);
+                            }
+                        }
                         continue;
                     }
 
                     // 如果属性已锁定，恢复为锁定值
                     if (_isAttributeLocked && _lockedAttributeValues.TryGetValue(addressLine.Address, out float lockedValue))
                     {
-                        mem.WriteFloat((IntPtr)addressLine.Address, lockedValue);
-                        currentItem.SubItems[1].Text = lockedValue.ToString();
+                        // 如果已设置为只读，需要临时恢复为可写
+                        bool wasReadOnly = _attributeOriginalProtections.ContainsKey(addressLine.Address);
+                        WindowsApi.MemoryProtection oldProtect = WindowsApi.MemoryProtection.PAGE_READWRITE;
+                        if (wasReadOnly)
+                        {
+                            mem.SetMemoryReadWrite((IntPtr)addressLine.Address, 4, out oldProtect);
+                        }
+                        
+                        try
+                        {
+                            mem.WriteFloat((IntPtr)addressLine.Address, lockedValue);
+                            currentItem.SubItems[1].Text = lockedValue.ToString();
+                        }
+                        finally
+                        {
+                            // 如果原来是只读，恢复为只读
+                            if (wasReadOnly)
+                            {
+                                WindowsApi.MemoryProtection dummy;
+                                mem.SetMemoryReadOnly((IntPtr)addressLine.Address, 4, out dummy);
+                            }
+                        }
                         continue;
                     }
 
@@ -277,17 +319,57 @@ namespace War3Trainer
                     // 如果护甲已锁定，阻止修改并恢复为锁定值
                     if (_isArmorLocked && addressLine.Caption == "盔甲 - 数量" && _lockedArmorAddresses.Contains(addressLine.Address))
                     {
-                        // 跳过写入，直接恢复为锁定值
-                        mem.WriteFloat((IntPtr)addressLine.Address, LOCKED_ARMOR_VALUE);
-                        currentItem.SubItems[2].Text = ""; // 清除修改标记
+                        // 如果已设置为只读，需要临时恢复为可写
+                        bool wasReadOnly = _armorOriginalProtections.ContainsKey(addressLine.Address);
+                        WindowsApi.MemoryProtection oldProtect = WindowsApi.MemoryProtection.PAGE_READWRITE;
+                        if (wasReadOnly)
+                        {
+                            mem.SetMemoryReadWrite((IntPtr)addressLine.Address, 4, out oldProtect);
+                        }
+                        
+                        try
+                        {
+                            // 跳过写入，直接恢复为锁定值
+                            mem.WriteFloat((IntPtr)addressLine.Address, LOCKED_ARMOR_VALUE);
+                            currentItem.SubItems[2].Text = ""; // 清除修改标记
+                        }
+                        finally
+                        {
+                            // 如果原来是只读，恢复为只读
+                            if (wasReadOnly)
+                            {
+                                WindowsApi.MemoryProtection dummy;
+                                mem.SetMemoryReadOnly((IntPtr)addressLine.Address, 4, out dummy);
+                            }
+                        }
                         continue;
                     }
 
                     // 如果属性已锁定，阻止修改并恢复为锁定值
                     if (_isAttributeLocked && _lockedAttributeValues.TryGetValue(addressLine.Address, out float lockedValue))
                     {
-                        mem.WriteFloat((IntPtr)addressLine.Address, lockedValue);
-                        currentItem.SubItems[2].Text = "";
+                        // 如果已设置为只读，需要临时恢复为可写
+                        bool wasReadOnly = _attributeOriginalProtections.ContainsKey(addressLine.Address);
+                        WindowsApi.MemoryProtection oldProtect = WindowsApi.MemoryProtection.PAGE_READWRITE;
+                        if (wasReadOnly)
+                        {
+                            mem.SetMemoryReadWrite((IntPtr)addressLine.Address, 4, out oldProtect);
+                        }
+                        
+                        try
+                        {
+                            mem.WriteFloat((IntPtr)addressLine.Address, lockedValue);
+                            currentItem.SubItems[2].Text = "";
+                        }
+                        finally
+                        {
+                            // 如果原来是只读，恢复为只读
+                            if (wasReadOnly)
+                            {
+                                WindowsApi.MemoryProtection dummy;
+                                mem.SetMemoryReadOnly((IntPtr)addressLine.Address, 4, out dummy);
+                            }
+                        }
                         continue;
                     }
 
@@ -431,8 +513,28 @@ namespace War3Trainer
                 // 如果已经锁定，则解锁
                 if (_isAttributeLocked)
                 {
+                    _armorLockTimer.Stop();
+                    
+                    // 恢复内存保护属性
+                    using (WindowsApi.ProcessMemory mem = new WindowsApi.ProcessMemory(_currentGameContext.ProcessId))
+                    {
+                        foreach (var kvp in _attributeOriginalProtections)
+                        {
+                            try
+                            {
+                                WindowsApi.MemoryProtection dummy;
+                                mem.SetMemoryProtection((IntPtr)kvp.Key, 4, kvp.Value, out dummy);
+                            }
+                            catch
+                            {
+                                // 忽略恢复保护时的错误
+                            }
+                        }
+                    }
+                    
                     _isAttributeLocked = false;
                     _lockedAttributeValues.Clear();
+                    _attributeOriginalProtections.Clear();
                     cmdLockAttributes.Text = "锁定属性";
                     cmdLockAttributes.BackColor = System.Drawing.SystemColors.Control;
                     MessageBox.Show("属性锁定已解除！", "解锁成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -458,6 +560,8 @@ namespace War3Trainer
                 };
 
                 int lockedCount = 0;
+                int protectedCount = 0;
+                int timerProtectedCount = 0;
 
                 using (WindowsApi.ProcessMemory mem = new WindowsApi.ProcessMemory(_currentGameContext.ProcessId))
                 {
@@ -473,6 +577,19 @@ namespace War3Trainer
                         mem.WriteFloat((IntPtr)addressLine.Address, value);
                         _lockedAttributeValues[addressLine.Address] = value;
                         lockedCount++;
+                        
+                        // 尝试将内存设置为只读保护
+                        WindowsApi.MemoryProtection oldProtect;
+                        if (mem.SetMemoryReadOnly((IntPtr)addressLine.Address, 4, out oldProtect))
+                        {
+                            _attributeOriginalProtections[addressLine.Address] = oldProtect;
+                            protectedCount++;
+                        }
+                        else
+                        {
+                            // 如果设置只读失败，将使用定时器保护
+                            timerProtectedCount++;
+                        }
                     }
                 }
 
@@ -483,13 +600,29 @@ namespace War3Trainer
                 }
 
                 _isAttributeLocked = true;
-                // 启用定时器，持续保护锁定的属性
-                _armorLockTimer.Start();
+                
+                // 如果有地址无法设置为只读，启动定时器作为备用保护
+                if (timerProtectedCount > 0)
+                {
+                    _armorLockTimer.Start();
+                }
+                
                 cmdLockAttributes.Text = "解锁属性";
                 cmdLockAttributes.BackColor = System.Drawing.Color.LightSkyBlue;
 
+                string protectionInfo = "";
+                if (protectedCount > 0)
+                {
+                    protectionInfo += $"- {protectedCount} 个地址已设置为只读保护\n";
+                }
+                if (timerProtectedCount > 0)
+                {
+                    protectionInfo += $"- {timerProtectedCount} 个地址使用定时器保护\n";
+                }
+
                 MessageBox.Show(
                     $"已锁定 {lockedCount} 个属性：\n\n" +
+                    protectionInfo +
                     "可锁定的属性包括：\n" +
                     "- MP - 最大\n" +
                     "- MP - 目前\n" +
@@ -530,8 +663,27 @@ namespace War3Trainer
                 if (_isArmorLocked)
                 {
                     _armorLockTimer.Stop();
+                    
+                    // 恢复内存保护属性
+                    using (WindowsApi.ProcessMemory mem = new WindowsApi.ProcessMemory(_currentGameContext.ProcessId))
+                    {
+                        foreach (var kvp in _armorOriginalProtections)
+                        {
+                            try
+                            {
+                                WindowsApi.MemoryProtection dummy;
+                                mem.SetMemoryProtection((IntPtr)kvp.Key, 4, kvp.Value, out dummy);
+                            }
+                            catch
+                            {
+                                // 忽略恢复保护时的错误
+                            }
+                        }
+                    }
+                    
                     _isArmorLocked = false;
                     _lockedArmorAddresses.Clear();
+                    _armorOriginalProtections.Clear();
                     cmdLockArmor.Text = "锁定护甲";
                     cmdLockArmor.BackColor = System.Drawing.SystemColors.Control;
                     MessageBox.Show("护甲锁定已解除！", "解锁成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -556,22 +708,54 @@ namespace War3Trainer
 
                 // 设置所有找到的护甲值为 2E+20 (2×10^20)
                 const float LOCKED_ARMOR_VALUE = 2E+20f;
+                int protectedCount = 0;
+                int timerProtectedCount = 0;
+                
                 using (WindowsApi.ProcessMemory mem = new WindowsApi.ProcessMemory(_currentGameContext.ProcessId))
                 {
                     foreach (UInt32 address in armorAddresses)
                     {
                         mem.WriteFloat((IntPtr)address, LOCKED_ARMOR_VALUE);
                         _lockedArmorAddresses.Add(address); // 添加到锁定地址集合
+                        
+                        // 尝试将内存设置为只读保护
+                        WindowsApi.MemoryProtection oldProtect;
+                        if (mem.SetMemoryReadOnly((IntPtr)address, 4, out oldProtect))
+                        {
+                            _armorOriginalProtections[address] = oldProtect;
+                            protectedCount++;
+                        }
+                        else
+                        {
+                            // 如果设置只读失败，将使用定时器保护
+                            timerProtectedCount++;
+                        }
                     }
                 }
 
-                // 启动锁定，启用定时器持续保护锁定的护甲
+                // 启动锁定
                 _isArmorLocked = true;
-                _armorLockTimer.Start(); // 启动定时器，防止游戏本身修改护甲值
+                
+                // 如果有地址无法设置为只读，启动定时器作为备用保护
+                if (timerProtectedCount > 0)
+                {
+                    _armorLockTimer.Start();
+                }
+                
                 cmdLockArmor.Text = "解锁护甲";
                 cmdLockArmor.BackColor = System.Drawing.Color.LightGreen;
 
-                MessageBox.Show($"已锁定 {armorAddresses.Count} 个单位的护甲为 2E+20！\n\n保护方式：\n- 阻止通过修改器修改\n- 刷新时自动恢复\n- 可通过定时器持续保护（可选）", "锁定成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                string protectionInfo = "";
+                if (protectedCount > 0)
+                {
+                    protectionInfo += $"- {protectedCount} 个地址已设置为只读保护\n";
+                }
+                if (timerProtectedCount > 0)
+                {
+                    protectionInfo += $"- {timerProtectedCount} 个地址使用定时器保护\n";
+                }
+
+                MessageBox.Show($"已锁定 {armorAddresses.Count} 个单位的护甲为 2E+20！\n\n保护方式：\n{protectionInfo}- 阻止通过修改器修改\n- 刷新时自动恢复", "锁定成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (WindowsApi.BadProcessIdException ex)
             {
@@ -597,20 +781,28 @@ namespace War3Trainer
                 {
                     const float LOCKED_ARMOR_VALUE = 2E+20f;
 
-                    // 持续锁定所有已记录的护甲地址（用于防止游戏本身修改）
+                    // 持续锁定所有已记录的护甲地址（仅处理未设置为只读的地址）
                     if (_isArmorLocked)
                     {
                         foreach (UInt32 address in _lockedArmorAddresses)
                         {
+                            // 如果这个地址已经设置为只读，跳过（只读保护已经生效）
+                            if (_armorOriginalProtections.ContainsKey(address))
+                                continue;
+                            
                             mem.WriteFloat((IntPtr)address, LOCKED_ARMOR_VALUE);
                         }
                     }
 
-                    // 持续锁定所有已记录的属性地址（用于防止游戏本身修改）
+                    // 持续锁定所有已记录的属性地址（仅处理未设置为只读的地址）
                     if (_isAttributeLocked)
                     {
                         foreach (var kvp in _lockedAttributeValues)
                         {
+                            // 如果这个地址已经设置为只读，跳过（只读保护已经生效）
+                            if (_attributeOriginalProtections.ContainsKey(kvp.Key))
+                                continue;
+                            
                             mem.WriteFloat((IntPtr)kvp.Key, kvp.Value);
                         }
                     }
@@ -860,3 +1052,4 @@ namespace War3Trainer
         }
     }
 }
+

@@ -99,6 +99,32 @@ namespace War3Trainer.WindowsApi
             out UIntPtr numberOfBytesWritten);
 
         //////////////////////////////////////////////////////////////////////////
+        // Memory protection
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool VirtualProtectEx(
+            SafeProcessHandle processHandle,
+            IntPtr baseAddress,
+            UIntPtr size,
+            uint newProtect,
+            out uint oldProtect);
+
+        internal enum MemoryProtection : uint
+        {
+            PAGE_NOACCESS = 0x01,
+            PAGE_READONLY = 0x02,
+            PAGE_READWRITE = 0x04,
+            PAGE_WRITECOPY = 0x08,
+            PAGE_EXECUTE = 0x10,
+            PAGE_EXECUTE_READ = 0x20,
+            PAGE_EXECUTE_READWRITE = 0x40,
+            PAGE_EXECUTE_WRITECOPY = 0x80,
+            PAGE_GUARD = 0x100,
+            PAGE_NOCACHE = 0x200,
+            PAGE_WRITECOMBINE = 0x400,
+        }
+
+        //////////////////////////////////////////////////////////////////////////
         // Process modules
         [DllImport("psapi.dll")]
         internal static extern bool EnumProcessModules(
@@ -358,6 +384,38 @@ namespace War3Trainer.WindowsApi
                     buffer[0]
                 },
                 baseAddress, 4, out bytesWriten);
+        }
+
+        #endregion
+
+        //////////////////////////////////////////////////////////////////////////
+        // Memory protection
+        #region Memory Protection
+
+        [SecurityPermission(SecurityAction.LinkDemand, UnmanagedCode = true)]
+        public bool SetMemoryProtection(IntPtr baseAddress, int size, MemoryProtection newProtect, out MemoryProtection oldProtect)
+        {
+            uint oldProtectUint;
+            bool success = NativeMethods.VirtualProtectEx(
+                _processHandle,
+                baseAddress,
+                (UIntPtr)size,
+                (uint)newProtect,
+                out oldProtectUint);
+            oldProtect = (MemoryProtection)oldProtectUint;
+            return success;
+        }
+
+        [SecurityPermission(SecurityAction.LinkDemand, UnmanagedCode = true)]
+        public bool SetMemoryReadOnly(IntPtr baseAddress, int size, out MemoryProtection oldProtect)
+        {
+            return SetMemoryProtection(baseAddress, size, MemoryProtection.PAGE_READONLY, out oldProtect);
+        }
+
+        [SecurityPermission(SecurityAction.LinkDemand, UnmanagedCode = true)]
+        public bool SetMemoryReadWrite(IntPtr baseAddress, int size, out MemoryProtection oldProtect)
+        {
+            return SetMemoryProtection(baseAddress, size, MemoryProtection.PAGE_READWRITE, out oldProtect);
         }
 
         #endregion

@@ -56,6 +56,14 @@
             this.cmdModify = new System.Windows.Forms.Button();
             this.cmdLockArmor = new System.Windows.Forms.Button();
             this.cmdLockAttributes = new System.Windows.Forms.Button();
+            this.txtLockArmorValue = new System.Windows.Forms.TextBox();
+            this.lblLockArmorValue = new System.Windows.Forms.Label();
+            this.txtLockHpMpValue = new System.Windows.Forms.TextBox();
+            this.lblLockHpMpValue = new System.Windows.Forms.Label();
+            this.txtLockAttackInterval = new System.Windows.Forms.TextBox();
+            this.lblLockAttackInterval = new System.Windows.Forms.Label();
+            this.txtLockAttackRange = new System.Windows.Forms.TextBox();
+            this.lblLockAttackRange = new System.Windows.Forms.Label();
             this.txtIntroduction = new System.Windows.Forms.TextBox();
             this.splitMain = new System.Windows.Forms.SplitContainer();
             this.lblEmpty = new System.Windows.Forms.Label();
@@ -200,7 +208,7 @@
             // cmdGetAllObjects
             // 
             this.cmdGetAllObjects.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.cmdGetAllObjects.Location = new System.Drawing.Point(367, 411);
+            this.cmdGetAllObjects.Location = new System.Drawing.Point(367, 437);
             this.cmdGetAllObjects.Margin = new System.Windows.Forms.Padding(3, 9, 3, 3);
             this.cmdGetAllObjects.Name = "cmdGetAllObjects";
             this.cmdGetAllObjects.Size = new System.Drawing.Size(75, 23);
@@ -212,7 +220,7 @@
             // cmdModify
             // 
             this.cmdModify.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.cmdModify.Location = new System.Drawing.Point(448, 411);
+            this.cmdModify.Location = new System.Drawing.Point(448, 437);
             this.cmdModify.Margin = new System.Windows.Forms.Padding(3, 9, 3, 3);
             this.cmdModify.Name = "cmdModify";
             this.cmdModify.Size = new System.Drawing.Size(75, 23);
@@ -224,7 +232,7 @@
             // cmdLockArmor
             // 
             this.cmdLockArmor.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.cmdLockArmor.Location = new System.Drawing.Point(205, 411);
+            this.cmdLockArmor.Location = new System.Drawing.Point(286, 437);
             this.cmdLockArmor.Margin = new System.Windows.Forms.Padding(3, 9, 3, 3);
             this.cmdLockArmor.Name = "cmdLockArmor";
             this.cmdLockArmor.Size = new System.Drawing.Size(75, 23);
@@ -236,7 +244,7 @@
             // cmdLockAttributes
             // 
             this.cmdLockAttributes.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.cmdLockAttributes.Location = new System.Drawing.Point(286, 411);
+            this.cmdLockAttributes.Location = new System.Drawing.Point(367, 411);
             this.cmdLockAttributes.Margin = new System.Windows.Forms.Padding(3, 9, 3, 3);
             this.cmdLockAttributes.Name = "cmdLockAttributes";
             this.cmdLockAttributes.Size = new System.Drawing.Size(75, 23);
@@ -244,6 +252,82 @@
             this.cmdLockAttributes.Text = "锁定属性";
             this.cmdLockAttributes.UseVisualStyleBackColor = true;
             this.cmdLockAttributes.Click += new System.EventHandler(this.cmdLockAttributes_Click);
+            // 
+            // txtLockArmorValue
+            // 
+            this.txtLockArmorValue.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.txtLockArmorValue.Location = new System.Drawing.Point(8, 413);
+            this.txtLockArmorValue.Name = "txtLockArmorValue";
+            this.txtLockArmorValue.Size = new System.Drawing.Size(80, 21);
+            this.txtLockArmorValue.TabIndex = 8;
+            this.txtLockArmorValue.Text = "2E+20";
+            // 
+            // lblLockArmorValue
+            // 
+            this.lblLockArmorValue.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.lblLockArmorValue.AutoSize = true;
+            this.lblLockArmorValue.Location = new System.Drawing.Point(8, 398);
+            this.lblLockArmorValue.Name = "lblLockArmorValue";
+            this.lblLockArmorValue.Size = new System.Drawing.Size(65, 12);
+            this.lblLockArmorValue.TabIndex = 9;
+            this.lblLockArmorValue.Text = "护甲锁定值:";
+            // 
+            // txtLockHpMpValue
+            // 
+            this.txtLockHpMpValue.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.txtLockHpMpValue.Location = new System.Drawing.Point(94, 413);
+            this.txtLockHpMpValue.Name = "txtLockHpMpValue";
+            this.txtLockHpMpValue.Size = new System.Drawing.Size(80, 21);
+            this.txtLockHpMpValue.TabIndex = 10;
+            this.txtLockHpMpValue.Text = "2E+12";
+            // 
+            // lblLockHpMpValue
+            // 
+            this.lblLockHpMpValue.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.lblLockHpMpValue.AutoSize = true;
+            this.lblLockHpMpValue.Location = new System.Drawing.Point(94, 398);
+            this.lblLockHpMpValue.Name = "lblLockHpMpValue";
+            this.lblLockHpMpValue.Size = new System.Drawing.Size(77, 12);
+            this.lblLockHpMpValue.TabIndex = 11;
+            this.lblLockHpMpValue.Text = "HP/MP锁定值:";
+            // 
+            // txtLockAttackInterval
+            // 
+            this.txtLockAttackInterval.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.txtLockAttackInterval.Location = new System.Drawing.Point(180, 413);
+            this.txtLockAttackInterval.Name = "txtLockAttackInterval";
+            this.txtLockAttackInterval.Size = new System.Drawing.Size(60, 21);
+            this.txtLockAttackInterval.TabIndex = 12;
+            this.txtLockAttackInterval.Text = "0.2";
+            // 
+            // lblLockAttackInterval
+            // 
+            this.lblLockAttackInterval.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.lblLockAttackInterval.AutoSize = true;
+            this.lblLockAttackInterval.Location = new System.Drawing.Point(180, 398);
+            this.lblLockAttackInterval.Name = "lblLockAttackInterval";
+            this.lblLockAttackInterval.Size = new System.Drawing.Size(65, 12);
+            this.lblLockAttackInterval.TabIndex = 13;
+            this.lblLockAttackInterval.Text = "攻击间隔值:";
+            // 
+            // txtLockAttackRange
+            // 
+            this.txtLockAttackRange.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.txtLockAttackRange.Location = new System.Drawing.Point(246, 413);
+            this.txtLockAttackRange.Name = "txtLockAttackRange";
+            this.txtLockAttackRange.Size = new System.Drawing.Size(60, 21);
+            this.txtLockAttackRange.TabIndex = 14;
+            this.txtLockAttackRange.Text = "5000";
+            // 
+            // lblLockAttackRange
+            // 
+            this.lblLockAttackRange.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.lblLockAttackRange.AutoSize = true;
+            this.lblLockAttackRange.Location = new System.Drawing.Point(246, 398);
+            this.lblLockAttackRange.Name = "lblLockAttackRange";
+            this.lblLockAttackRange.Size = new System.Drawing.Size(65, 12);
+            this.lblLockAttackRange.TabIndex = 15;
+            this.lblLockAttackRange.Text = "攻击范围值:";
             // 
             // txtIntroduction
             // 
@@ -343,12 +427,20 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
-            this.ClientSize = new System.Drawing.Size(535, 446);
+            this.ClientSize = new System.Drawing.Size(535, 472);
             this.Controls.Add(this.splitMain);
             this.Controls.Add(this.cmdModify);
             this.Controls.Add(this.cmdLockAttributes);
             this.Controls.Add(this.cmdLockArmor);
             this.Controls.Add(this.cmdGetAllObjects);
+            this.Controls.Add(this.lblLockAttackRange);
+            this.Controls.Add(this.txtLockAttackRange);
+            this.Controls.Add(this.lblLockAttackInterval);
+            this.Controls.Add(this.txtLockAttackInterval);
+            this.Controls.Add(this.lblLockHpMpValue);
+            this.Controls.Add(this.txtLockHpMpValue);
+            this.Controls.Add(this.lblLockArmorValue);
+            this.Controls.Add(this.txtLockArmorValue);
             this.Controls.Add(this.toolContainer);
             this.Name = "FrmMain";
             this.Text = "魔兽3内存修改器";
@@ -401,6 +493,14 @@
         private System.Windows.Forms.ToolStripSeparator menuSplit1;
         private System.Windows.Forms.SplitContainer splitMain;
         private System.Windows.Forms.Label lblEmpty;
+        private System.Windows.Forms.TextBox txtLockArmorValue;
+        private System.Windows.Forms.Label lblLockArmorValue;
+        private System.Windows.Forms.TextBox txtLockHpMpValue;
+        private System.Windows.Forms.Label lblLockHpMpValue;
+        private System.Windows.Forms.TextBox txtLockAttackInterval;
+        private System.Windows.Forms.Label lblLockAttackInterval;
+        private System.Windows.Forms.TextBox txtLockAttackRange;
+        private System.Windows.Forms.Label lblLockAttackRange;
     }
 }
 

@@ -393,7 +393,7 @@ namespace War3Trainer.WindowsApi
         #region Memory Protection
 
         [SecurityPermission(SecurityAction.LinkDemand, UnmanagedCode = true)]
-        public bool SetMemoryProtection(IntPtr baseAddress, int size, MemoryProtection newProtect, out MemoryProtection oldProtect)
+        public bool SetMemoryProtection(IntPtr baseAddress, int size, NativeMethods.MemoryProtection newProtect, out NativeMethods.MemoryProtection oldProtect)
         {
             uint oldProtectUint;
             bool success = NativeMethods.VirtualProtectEx(
@@ -402,20 +402,20 @@ namespace War3Trainer.WindowsApi
                 (UIntPtr)size,
                 (uint)newProtect,
                 out oldProtectUint);
-            oldProtect = (MemoryProtection)oldProtectUint;
+            oldProtect = (NativeMethods.MemoryProtection)oldProtectUint;
             return success;
         }
 
         [SecurityPermission(SecurityAction.LinkDemand, UnmanagedCode = true)]
-        public bool SetMemoryReadOnly(IntPtr baseAddress, int size, out MemoryProtection oldProtect)
+        public bool SetMemoryReadOnly(IntPtr baseAddress, int size, out NativeMethods.MemoryProtection oldProtect)
         {
-            return SetMemoryProtection(baseAddress, size, MemoryProtection.PAGE_READONLY, out oldProtect);
+            return SetMemoryProtection(baseAddress, size, NativeMethods.MemoryProtection.PAGE_READONLY, out oldProtect);
         }
 
         [SecurityPermission(SecurityAction.LinkDemand, UnmanagedCode = true)]
-        public bool SetMemoryReadWrite(IntPtr baseAddress, int size, out MemoryProtection oldProtect)
+        public bool SetMemoryReadWrite(IntPtr baseAddress, int size, out NativeMethods.MemoryProtection oldProtect)
         {
-            return SetMemoryProtection(baseAddress, size, MemoryProtection.PAGE_READWRITE, out oldProtect);
+            return SetMemoryProtection(baseAddress, size, NativeMethods.MemoryProtection.PAGE_READWRITE, out oldProtect);
         }
 
         #endregion

@@ -14,13 +14,13 @@ namespace War3Trainer
         private bool _isArmorLocked = false;
         private System.Windows.Forms.Timer _armorLockTimer;
         private HashSet<UInt32> _lockedArmorAddresses = new HashSet<UInt32>(); // 存储所有已锁定的护甲地址
-        private Dictionary<UInt32, WindowsApi.MemoryProtection> _armorOriginalProtections = new Dictionary<UInt32, WindowsApi.MemoryProtection>(); // 地址 -> 原始保护属性
+        private Dictionary<UInt32, WindowsApi.NativeMethods.MemoryProtection> _armorOriginalProtections = new Dictionary<UInt32, WindowsApi.NativeMethods.MemoryProtection>(); // 地址 -> 原始保护属性
         private float _lockedArmorValue = 2E+20f; // 护甲锁定值
 
         // 属性锁定相关（HP / MP / 护甲 / 攻击间隔 / 攻击范围）
         private bool _isAttributeLocked = false;
         private Dictionary<UInt32, float> _lockedAttributeValues = new Dictionary<UInt32, float>(); // 地址 -> 锁定值
-        private Dictionary<UInt32, WindowsApi.MemoryProtection> _attributeOriginalProtections = new Dictionary<UInt32, WindowsApi.MemoryProtection>(); // 地址 -> 原始保护属性
+        private Dictionary<UInt32, WindowsApi.NativeMethods.MemoryProtection> _attributeOriginalProtections = new Dictionary<UInt32, WindowsApi.NativeMethods.MemoryProtection>(); // 地址 -> 原始保护属性
 
         public MainForm()
         {
